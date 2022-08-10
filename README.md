@@ -74,6 +74,14 @@ The test data format is still COCO format, please adapt it according to the corr
 python test.py --data-path "data_root_path" --weights-path "weight-path" --k2 0 --DBT 0
 ```
 
+## Some toy_images
+Some toy_images can be found in dictionary *toy_images* 
+
+And the predicted results can be found in dictionary *results*
+
+![10004_o](toy_images/10004.jpg)
+
+![10004_p](results/10004.jpg)
 ## Copy Right
 
 This dataset was collected for academic research.
