@@ -1,0 +1,21 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args":[    
+                "--weight_path","/data/leiqin/mask_rcnn/results_logs/mydataset/imp/roi112_d_thr/model_7.pth",
+                "--img_path","/data/leiqin/git_for_DBT_MASK_RCNN_crack_instance/toy_images/10032.jpg",
+                "--DBT","1", "--k","1"
+            ]
+        }
+    ]
+}
