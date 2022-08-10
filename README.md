@@ -2,10 +2,6 @@
 
 We provide the codes, the datasets, and the pretrained model.
 
-const
-
-**Under Construction...**
-
 ## Pretrained Models
 
 Pretrained models on PyTorch are available at,
