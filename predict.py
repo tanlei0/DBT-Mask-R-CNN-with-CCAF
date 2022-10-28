@@ -24,26 +24,19 @@ def create_model(num_classes, box_thresh=0.5,use_best_thr = False):
 
     return model
 
-def erode_for_mask(mask, k=2,kernel = np.ones((3, 3), dtype=np.uint8)):
-    non_eroded = mask
-    for i in range(k):
-        eroded = cv2.erode(non_eroded.astype(np.uint8), kernel, 1)
-        non_eroded = eroded
-    
-    return eroded
 
 def time_synchronized():
     torch.cuda.synchronize() if torch.cuda.is_available() else None
     return time.time()
 
 def main(args):
-    num_classes = 1  # 不包含背景
+    num_classes = 1  
     box_thresh = 0.5
     weight_path = args.weight_path
     img_path = args.img_path
     category_index = {"1":"crack"}
 
-    use_best_thr = args.DBT
+    use_best_thr = args.OTM
 
     # get devices
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -116,15 +109,14 @@ def main(args):
         plt.show()
 
         plot_img.save(os.path.join('./results',img_path.split("/")[-1]))
-
+        
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__)
 
     parser.add_argument('--weight_path', help='weight', type=str)
     parser.add_argument('--img_path', help='image path',type=str)
-    parser.add_argument('--DBT', help='Swith for DBT branch',type=bool,default=False)
-    parser.add_argument('--k', help='k2 for CCAF',type=int, default=0)
+    parser.add_argument('--OTM', help='Swith for OTM',type=bool,default=True)
     args = parser.parse_args()
 
     main(args)

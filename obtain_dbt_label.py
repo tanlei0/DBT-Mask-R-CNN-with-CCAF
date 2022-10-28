@@ -1,18 +1,15 @@
+
 import os
-import json
-import cv2 
 import torch
 from tqdm import tqdm
 import numpy as np
-import torch.nn.functional as F
+import pickle
+import datetime
 import transforms
 from backbone import resnet50_fpn_backbone
 from network_files import MaskRCNN
-
-from train_utils import EvalCOCOMetric
+from train_utils import EvalCOCOMetricSingleImage
 from dataset.crack500dataset import Crack500Instance
-from dataset.my_dataset_coco import CocoDetection
-import pandas as pd
 
 
 def summarize(self, catId=None):
@@ -110,95 +107,106 @@ def save_info(coco_evaluators,
         record_lines.extend([print_coco,""])
     line = "MUCov: "+str(extra_metric_info[-2])+" MWCov: "+str(extra_metric_info[-1])
     record_lines.extend([line,""])
-
+   
     with open(save_name, "w") as f:
         f.write("\n".join(record_lines))
 
-        
 
 def main(parser_data):
     device = torch.device(parser_data.device if torch.cuda.is_available() else "cpu")
     print("Using {} device training.".format(device.type))
-    use_best_thr = parser_data.OTM
-    data_transform = {
-        "val": transforms.Compose([transforms.ToTensor()])
-    }
 
-    # read class_indict
-    label_json_path = parser_data.label_json_path
-    assert os.path.exists(label_json_path), "json file {} dose not exist.".format(label_json_path)
-    with open(label_json_path, 'r') as f:
-        category_index = json.load(f)
-
-    data_root = parser_data.data_path
-    data_set = parser_data.dataset
+    data_transform = transforms.Compose([transforms.ToTensor()])
+    
     batch_size = parser_data.batch_size
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
     print('Using %g dataloader workers' % nw)
+
     # load validation data set
-    if data_set == "crack500":
-        val_dataset = Crack500Instance(data_root, dataset="test",transforms=data_transform["val"])
-    else:
-        val_dataset = CocoDetection(data_root, "val", data_transform["val"])
-    val_dataset_loader = torch.utils.data.DataLoader(val_dataset,
+    set_type = parser_data.dataset
+    data_path = parser_data.data_path
+    select_set = parser_data.set
+    if set_type == "crack500":
+        dataset = Crack500Instance(data_path, dataset=select_set,transforms=data_transform)
+
+    
+    dataset_loader = torch.utils.data.DataLoader(dataset,
                                                      batch_size=batch_size,
                                                      shuffle=False,
                                                      pin_memory=True,
                                                      num_workers=nw,
-                                                     collate_fn=val_dataset.collate_fn)
+                                                     collate_fn=dataset.collate_fn)
 
 
     # create model
     backbone = resnet50_fpn_backbone()
-    if use_best_thr is True:
-        model = MaskRCNN(backbone, num_classes=args.num_classes + 1, use_best_thr=use_best_thr)
-    else:
-        model = MaskRCNN(backbone, num_classes=args.num_classes + 1)
+    model = MaskRCNN(backbone, num_classes=args.num_classes + 1)
 
+    # 载入你自己训练好的模型权重
     weights_path = parser_data.weights_path
     assert os.path.exists(weights_path), "not found {} file.".format(weights_path)
     model.load_state_dict(torch.load(weights_path, map_location='cpu')['model'])
-
+    # print(model)
     model.to(device)
 
     # evaluate on the val dataset
     cpu_device = torch.device("cpu")
-
-    det_metric = EvalCOCOMetric(val_dataset.coco, "bbox", "det_results.json")
-    seg_metric = EvalCOCOMetric(val_dataset.coco, "segm", "seg_results.json")
+    now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    tmp_json = "seg_"+__file__.split("/")[-1]+f"_{now}.json"
+    
+    seg_metric = EvalCOCOMetricSingleImage(dataset.coco, "segm", tmp_json)
     model.eval()
+    results = {}  
+    thr_range = np.linspace(0.01,1, 100)
 
-     
-    fix_thr = 0.5
-    k = 0
-    thr_mse_dict = {}
+    
+    
+    
+    skip_flag = False
     with torch.no_grad():
-        for image, targets in tqdm(val_dataset_loader, desc="validation..."):
-
+        for i, (image, targets) in tqdm(enumerate(dataset_loader), desc="validation..."):
+            
             image = list(img.to(device) for img in image)
-            # image_id = int(targets[0]["image_id"])
+            image_id = int(targets[0]["image_id"])
             # inference
             outputs = model(image)
 
             outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
+            for output in outputs:
+                if skip_flag:
+                    break
+                else:
+                    for k,v in output.items():
+                        if v.numel() == 0:
+                            results[(image_id,0,0)] = 0
+                            print(f"{image_id} is skipped")
+                            skip_flag = True
+                            break
+            if skip_flag:
+                skip_flag = False
+                continue
+    
+            # NOTE: k is not relevant to OTM, used for other experiments, and can be ignored here
+            k = 0
+            for thr in thr_range:
+                thr = np.round(thr, 2)
+                seg_metric.update(targets, outputs, seg_thr=thr,k=k)
+                seg_metric.synchronize_results()
+                seg_info = seg_metric.evaluate(is_my_coco_eval=True)
+                results[(image_id,k, thr)] =  {"MUCov": seg_info[-2], "MWCov":seg_info[-1]}
+                print("results[({},{},{})]: {}".format(image_id, k,thr, results[(image_id, k, thr)]))
+                seg_metric.release()
+        
+    with open(args.save_pkl, "wb") as fp:
+        pickle.dump(results, fp)
+    print("save the ", args.save_pkl)
 
-            if use_best_thr:
-                pred_thr = outputs[0]["thr"]
-            else:
-                 pred_thr = fix_thr
+    try:
+        os.remove(tmp_json)
+        print(f"remove {tmp_json}")
+    except:
+        print(f"remove {tmp_json} fail" )
 
-            
-            det_metric.update(targets, outputs)
-            seg_metric.update(targets, outputs,pred_thr, k)
-
-    det_metric.synchronize_results()
-    seg_metric.synchronize_results()
-    det_metric.evaluate()
-    seg_info = seg_metric.evaluate(True)
-    metrics_coco_evaluators = [det_metric.coco_evaluator, seg_metric.coco_evaluator]
-    output_file = "val_{}_k_{}.txt".format(weights_path.split("/")[-1].split(".")[-2],k)
-    save_info(metrics_coco_evaluators, category_index, output_file, seg_info)
-    print("MUCov:", seg_info[-2], " MWCov", seg_info[-1])
 
 if __name__ == "__main__":
     import argparse
@@ -206,20 +214,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__)
 
-    parser.add_argument('--device', default='cuda', help='device')
+    parser.add_argument('--device', default='cuda:1', help='device')
     parser.add_argument('--num-classes', type=int, default=1, help='number of classes')
-    parser.add_argument('--data-path', help='dataset root')
+    parser.add_argument('--data-path', default='', help='dataset root')
     parser.add_argument('--weights-path', type=str, help='training weights')
 
     # batch size(set to 1, don't change)
     parser.add_argument('--batch-size', default=1, type=int, metavar='N',
                         help='batch size when validation.')
-
-    parser.add_argument('--label_json_path', default="coco91_indices.json", type=str,
-                        help='Do not change')
-
-    parser.add_argument('--OTM', default=True, type=bool, help = "The switch for OTM")
-    parser.add_argument('--dataset', default="crack500", type=str, help = "The dataset to test")
+    parser.add_argument('--label-json-path', type=str, default="coco91_indices.json")
+    parser.add_argument('--save_pkl', type=str, help="the save pkl file")
+    parser.add_argument("--dataset", type=str, default="crack500")
+    parser.add_argument("--set", type=str, default="train")
     args = parser.parse_args()
 
     main(args)

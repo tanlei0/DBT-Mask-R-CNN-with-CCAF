@@ -8,7 +8,7 @@ from pycocotools.coco import COCO
 from train_utils import coco_remove_images_without_annotations, convert_coco_poly_mask
 import pandas as pd
 
-class Crack500Instance(data.Dataset):
+class CocoDetection(data.Dataset):
     """`MS Coco Detection <https://cocodataset.org/>`_ Dataset.
 
     Args:
@@ -19,16 +19,11 @@ class Crack500Instance(data.Dataset):
     """
 
     def __init__(self, root, dataset="train", transforms=None, best_thr_file=None):
-        super(Crack500Instance, self).__init__()
-        assert dataset in ["train", "val", "train_imp","val_imp","test","test_imp"], 'dataset must be in ["train", "val"]'
-        if "imp" in dataset:
-            anno_file = f"{dataset}.json"
-            dataset = dataset.split("_")[0]
-        else:
-            anno_file = f"{dataset}.json"
-        
+        super(CocoDetection, self).__init__()
+        assert dataset in ["train", "val", "train_imp","val_imp", "val1"], 'dataset must be in ["train", "val"]'
+        anno_file = f"{dataset}.json"
         assert os.path.exists(root), "file '{}' does not exist.".format(root)
-        self.img_root = os.path.join(root, dataset+"data")
+        self.img_root = os.path.join(root, "alldata")
         assert os.path.exists(self.img_root), "path '{}' does not exist.".format(self.img_root)
         self.anno_path = os.path.join(root, "annotations", anno_file)
         assert os.path.exists(self.anno_path), "file '{}' does not exist.".format(self.anno_path)
@@ -38,12 +33,9 @@ class Crack500Instance(data.Dataset):
         self.coco = COCO(self.anno_path)
         
         # code for best thr
-        if best_thr_file is not None:
-            self.bestK_path = best_thr_file
-        else:
-            self.bestK_path = None
-       
         
+        self.bestK_path = best_thr_file
+
         if self.bestK_path is not None and os.path.exists(self.bestK_path):
             self.use_best_thr = True
         else:
@@ -52,9 +44,11 @@ class Crack500Instance(data.Dataset):
         if self.use_best_thr:
             self.best_thr_df = pd.read_csv(self.bestK_path)
 
+        # 获取coco数据索引与类别名称的关系
+        # 注意在object80中的索引并不是连续的，虽然只有80个类别，但索引还是按照stuff91来排序的
         data_classes = dict([(v["id"], v["name"]) for k, v in self.coco.cats.items()])
         max_index = max(data_classes.keys())  # 90
-
+        # 将缺失的类别名称设置成N/A
         coco_classes = {}
         for k in range(1, max_index + 1):
             if k in data_classes:
@@ -71,7 +65,7 @@ class Crack500Instance(data.Dataset):
 
         ids = list(sorted(self.coco.imgs.keys()))
         if dataset == "train":
-
+            # 移除没有目标，或者目标面积非常小的数据
             valid_ids = coco_remove_images_without_annotations(self.coco, ids)
             self.ids = valid_ids
         else:
@@ -85,7 +79,7 @@ class Crack500Instance(data.Dataset):
         assert w > 0
         assert h > 0
 
-
+        # 只筛选出单个对象的情况
         anno = [obj for obj in coco_targets if obj['iscrowd'] == 0]
 
         boxes = [obj["bbox"] for obj in anno]
@@ -106,7 +100,7 @@ class Crack500Instance(data.Dataset):
         segmentations = [obj["segmentation"] for obj in anno]
         masks = convert_coco_poly_mask(segmentations, h, w)
 
-
+        # 筛选出合法的目标，即x_max>x_min且y_max>y_min
         keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
         boxes = boxes[keep]
         classes = classes[keep]
@@ -173,3 +167,9 @@ class Crack500Instance(data.Dataset):
         return tuple(zip(*batch))
 
 
+"""
+train = CocoDetection("/home/leiqin/data_leiqin/datasets/mycrackdatasets", dataset="train")
+print(len(train))
+t = train[0]
+print(t)
+"""
