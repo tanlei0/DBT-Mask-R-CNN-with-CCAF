@@ -62,7 +62,7 @@ python train.py --data-path "data_root_path"
 ```
 After training, select the appropriate weight file **model_x.pth** in the `./save_weights/` directory
 
-- Second obtain the labels of OTM
+- Second obtain the labels of DBT
 You need to run the following two scripts to get the **.csv** file for the DBT
 ```
 python obtain_dbt_label.py --data-path "data_root_path" --weights-path "model_x.pth" --save_pkl "othrs/labels_dbt.pkl"
