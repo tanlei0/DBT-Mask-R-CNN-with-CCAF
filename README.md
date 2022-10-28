@@ -63,7 +63,7 @@ python train.py --data-path "data_root_path"
 After training, select the appropriate weight file **model_x.pth** in the `./save_weights/` directory
 
 - Second obtain the labels of OTM
-You need to run the following two scripts to get the **.csv** file for the OTM
+You need to run the following two scripts to get the **.csv** file for the DBT
 ```
 python obtain_dbt_label.py --data-path "data_root_path" --weights-path "model_x.pth" --save_pkl "othrs/labels_dbt.pkl"
 ```
@@ -71,12 +71,12 @@ python obtain_dbt_label.py --data-path "data_root_path" --weights-path "model_x.
 ```
 python parse_best_othr.py --pkl_path "othrs/labels_dbt.pkl" --save_path "othrs/dbt_labels.csv"
 ```
-- Final train Mask R-CNN with OTM
+- Final train Mask R-CNN with DBT
 
 ```
-python train.py --data-path "data_root_path"  --DBT "True" --othrs "othrs/otm_labels.csv"
+python train.py --data-path "data_root_path"  --DBT "True" --othrs "othrs/dbt_labels.csv"
 ```
-The files in the directory `./save_weights` are the Mask R-CNN with OTM weights after the training is completed.
+The files in the directory `./save_weights` are the Mask R-CNN with DBT weights after the training is completed.
 
 ## Test
 
@@ -89,7 +89,7 @@ We provide the test results of CrackTunnel1K.
 | Method           | mAP50 | MUCov | MWCov |
 | ---------------- | ----- | ----- | ----- |
 | Mask R-CNN       | 6.5   | 39.6  | 40    |
-| Mask R-CNN + OTM | 13    | 45.4  | 46.9  |
+| Mask R-CNN + DBT | 13    | 45.4  | 46.9  |
 
 
 ## Predicted Results Visualization
