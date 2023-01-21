@@ -3,7 +3,7 @@
 ![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)
 ![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-blue.svg)
 
-# Improving the Accuracy of Crack Instance Segmentation through Crack Causal Augmentation Framework and Dynamic Binary Threshold
+# Overcoming Imbalance Challenges in Crack Instance Segmentation through the Integration of Crack Causal Augmentation Framework and Dynamic Binary Threshold
 
 We provide the codes (**Pytorch implementation**), the datasets, and the pretrained model.
 
