@@ -69,7 +69,7 @@ python train.py --data-path "data_root_path"
 
 After training, select the appropriate weight file **model_x.pth** in the `./save_weights/` directory
 
-- Second obtain the labels of DBT
+- Second obtain the labels of DBT.
   You need to run the following two scripts to get the **.csv** file for the DBT
 
 ```
@@ -101,7 +101,7 @@ We provide the test results of CrackTunnel1K.
 | Method           | mAP50 | MUCov | MWCov |
 | ---------------- | ----- | ----- | ----- |
 | Mask R-CNN       | 6.5   | 39.6  | 40    |
-| Mask R-CNN + DBT | 13    | 45.4  | 46.9  |
+| Mask R-CNN + CCAF + DBT | 13    | 45.4  | 46.9  |
 
 ## Predicted Results Visualization
 
