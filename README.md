@@ -3,7 +3,7 @@
 ![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)
 ![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-blue.svg)
 
-# Overcoming Imbalance Challenges in Crack Instance Segmentation through the Integration of Crack Causal Augmentation Framework and Dynamic Binary Threshold
+# Implementation of a Crack Causal Augmentation Framework (CCAF) and Dynamic Binary Threshold (DBT) on Mask R-CNN for Crack Instance Segmentation
 
 We provide the codes (**Pytorch implementation**), the datasets, and the pretrained model.
 
