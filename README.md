@@ -1,5 +1,5 @@
-![Python 3.7](https://img.shields.io/badge/python-3.7.0-green.svg)
-![Packagist](https://img.shields.io/badge/Pytorch-1.12.1-red.svg)
+![Python 3.7](https://img.shields.io/badge/python-3.8.0-green.svg)
+![Packagist](https://img.shields.io/badge/Pytorch-2.0.0-red.svg)
 ![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)
 ![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-blue.svg)
 
@@ -130,4 +130,4 @@ This dataset was collected for academic research.
 
 ## Contact
 
-For any problem about this dataset or codes, please contact Dr. Qin Lei (qinlei@cqu.edu.cn)
+For any problem about this dataset or codes, please contact Dr. Qin Lei (qinlei@cqu.edu.cn, tanlei086@gmail.com)
