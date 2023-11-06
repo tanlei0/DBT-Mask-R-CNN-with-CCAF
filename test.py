@@ -119,7 +119,7 @@ def save_info(coco_evaluators,
 def main(parser_data):
     device = torch.device(parser_data.device if torch.cuda.is_available() else "cpu")
     print("Using {} device training.".format(device.type))
-    use_best_thr = parser_data.OTM
+    use_best_thr = parser_data.DBT
     data_transform = {
         "val": transforms.Compose([transforms.ToTensor()])
     }
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     parser.add_argument('--label_json_path', default="coco91_indices.json", type=str,
                         help='Do not change')
 
-    parser.add_argument('--OTM', default=True, type=bool, help = "The switch for OTM")
+    parser.add_argument('--DBT', default=True, type=bool, help = "The switch for DBT")
     parser.add_argument('--dataset', default="crack500", type=str, help = "The dataset to test")
     args = parser.parse_args()
 

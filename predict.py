@@ -36,7 +36,7 @@ def main(args):
     img_path = args.img_path
     category_index = {"1":"crack"}
 
-    use_best_thr = args.OTM
+    use_best_thr = args.DBT
 
     # get devices
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -108,7 +108,7 @@ def main(args):
         plt.imshow(plot_img)
         plt.show()
 
-        plot_img.save(os.path.join('./results',img_path.split("/")[-1]))
+        plot_img.save(os.path.join('./results_test',img_path.split("/")[-1]))
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--weight_path', help='weight', type=str)
     parser.add_argument('--img_path', help='image path',type=str)
-    parser.add_argument('--OTM', help='Swith for OTM',type=bool,default=True)
+    parser.add_argument('--DBT', help='Swith for DBT',type=bool,default=True)
     args = parser.parse_args()
 
     main(args)
